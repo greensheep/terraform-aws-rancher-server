@@ -1,0 +1,92 @@
+#!/bin/bash
+
+# Write SSL certificate / key
+echo "${ssl_certificate_body}" > /etc/ssl/certs/rancher-server.pem
+echo "${ssl_private_key}" > /etc/ssl/certs/rancher-server.key
+
+# Write Nginx config
+mkdir -p /etc/nginx/conf.d
+echo "${nginx_config}" > /etc/nginx/conf.d/proxy.conf
+
+# Install jq
+yum install -y jq
+
+# Install docker
+wget -qO- https://get.docker.com/ | sh
+service docker start
+
+# Pull required images
+docker pull rancher/server:${server_version}
+docker pull greensheep/rancher-delete-host
+docker pull nginx:1.9
+
+# Run rancher server
+docker run -d --restart=always --name=rancher-server \
+           -e CATTLE_DB_CATTLE_MYSQL_HOST=${database_address} \
+           -e CATTLE_DB_CATTLE_MYSQL_PORT=${database_port} \
+           -e CATTLE_DB_CATTLE_MYSQL_NAME=${database_name} \
+           -e CATTLE_DB_CATTLE_USERNAME=${database_username} \
+           -e CATTLE_DB_CATTLE_PASSWORD=${database_password} \
+              rancher/server
+
+# Wait for rancher server to start
+serverIp=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' rancher-server)
+serverUrl="http://$serverIp:8080/v1"
+echo "=> Rancher server URL: $serverUrl"
+up=""
+sleepTime=5
+while [[ "$up" != "200" && "$up" != "401" ]]; do
+    sleep $sleepTime
+    up=$(curl -s -o /dev/null -I -w "%{http_code}" $serverUrl)
+    echo "=> Server status: $up"
+    echo "=> Waiting $sleepTime seconds for rancher server.."
+done
+
+# Check if we can access the server.
+# If the server is brand new, the API will be unprotected. If the API
+# is protected, we know these commands should have already been run.
+if [ "$up" == "200" ]; then
+
+    # Server unprotected, requires setup.
+    # Create some access keys
+    response=$(curl -s -X POST \
+         -H 'Accept: application/json' \
+         -H 'Content-Type: application/json' \
+         -d '{"description":"Server bootstrap access key. DO NOT DELETE!", "name":"bootstrap-access"}' \
+         $serverUrl/apikeys)
+
+    # Get the credentials
+    credentials="$(echo $response | jq -r '.publicValue'):$(echo $response | jq -r '.secretValue')"
+
+    # Write the keys a file then move to S3
+    touch /tmp/KEYS
+    echo "$credentials" > /tmp/KEYS
+    aws --region ${vpc_region} s3 cp /tmp/KEYS s3://${server_credentials_bucket}/keys.txt
+    rm /tmp/KEYS
+
+else
+
+    # Server protected, no setup needed.
+    # Load keys from S3
+    credentials=$(aws --region ${vpc_region} s3 cp s3://${server_credentials_bucket}/keys.txt -)
+
+fi
+
+# Split credentials
+credentialsArr=($${credentials//:/ })
+
+# Run autoscaling lifecycle events handler
+docker run -d --restart=always --name=asglifecycle \
+           -e RANCHER_SERVER_ACCESS_KEY=$${credentialsArr[0]} \
+           -e RANCHER_SERVER_SECRET_KEY=$${credentialsArr[1]} \
+           -e SQS_URL=${sqs_url} \
+           --link rancher-server:rancher-server \
+           greensheep/rancher-delete-host
+
+# Start nginx
+docker run -d --restart=always --name=rancher-proxy \
+           -p 80:80 -p 443:443 \
+           -v /etc/nginx/conf.d:/etc/nginx/conf.d:ro \
+           -v /etc/ssl/certs:/etc/ssl/certs:ro \
+           --link rancher-server:rancher-server \
+           nginx:1.9
