@@ -47,7 +47,7 @@ Include the following anywhere in your Terraform config:
 
 ### Notes
 
-- The rancher server takes a minute or so to start up and longer on initial bootstrap.
+- The rancher server takes a minute or so to start up and longer on initial bootstrap.. give it at least 10 mins after terraform has finished creating all the resources.
 - On initial bootstrap, the server will be unprotected.. the first thing you should do is configure access control!
 - The hostname should be routable to the server before creating hosts - the best way to do this is with Route53 and a terraform config (see example below).
 - It should be possible to use a self-signed SSL certificate, but I've not tested this.
