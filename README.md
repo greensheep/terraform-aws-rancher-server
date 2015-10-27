@@ -13,11 +13,13 @@ The server is placed behind an Nginx proxy which is responsible for SSL terminat
 
 ### Example usage
 
-Include the following anywhere in your Terraform config:
+Include the following in your Terraform config:
 
     module "rancher_server" {
 
         # Import the module from Github
+        # It's probably better to fork or clone this repo if you intend to use in production
+        # so any future changes dont mess up your existing infrastructure.
         source = "github.com/greensheep/terraform-aws-rancher-server"
 
         # Set the details of the target VPC
