@@ -101,6 +101,7 @@ resource "aws_instance" "rancher_server" {
 
     tags {
         Name = "${var.server_name}"
+        ManagedBy = "terraform"
     }
 
     lifecycle {
