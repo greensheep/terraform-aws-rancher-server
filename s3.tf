@@ -7,6 +7,7 @@ resource "aws_s3_bucket" "server_credentials_bucket" {
 
     tags {
         Name = "${var.server_name}"
+        ManagedBy = "terraform"
     }
 
     lifecycle {
