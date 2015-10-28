@@ -68,6 +68,7 @@ resource "aws_security_group" "rancher_server_sg" {
 
     tags {
         Name = "${var.server_name}"
+        ManagedBy = "terraform"
     }
 
     lifecycle {
