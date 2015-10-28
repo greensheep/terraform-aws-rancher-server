@@ -10,6 +10,11 @@ resource "aws_sqs_queue" "autoscaling_hooks_queue" {
     # Keep the message in the queue for a max of 30 minutes.
     # This is the same as the wait period for lifecycle hooks.
     message_retention_seconds = 1800
+    
+    tags {
+        Name = "${var.server_name}-asg-hooks"
+        ManagedBy = "terraform"
+    }
 
     lifecycle {
         create_before_destroy = true
