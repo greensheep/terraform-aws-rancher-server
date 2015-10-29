@@ -27,7 +27,7 @@ docker run -d --restart=always --name=rancher-server \
            -e CATTLE_DB_CATTLE_MYSQL_NAME=${database_name} \
            -e CATTLE_DB_CATTLE_USERNAME=${database_username} \
            -e CATTLE_DB_CATTLE_PASSWORD=${database_password} \
-              rancher/server
+              rancher/server:${server_version}
 
 # Wait for rancher server to start
 serverIp=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' rancher-server)
