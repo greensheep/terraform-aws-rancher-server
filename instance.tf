@@ -17,7 +17,8 @@ resource "aws_key_pair" "keypair" {
 # Nginx proxy config
 resource "template_file" "nginx_config" {
 
-    filename = "${path.module}/files/nginx.template"
+    template = "${file("${path.module}/files/nginx.template")}"
+
     vars {
         server_hostname = "${var.server_hostname}"
     }
@@ -31,7 +32,8 @@ resource "template_file" "nginx_config" {
 # User-data template
 resource "template_file" "user_data" {
 
-    filename = "${path.module}/files/userdata.template"
+    template = "${file("${path.module}/files/userdata.template")}"
+
     vars {
 
         # VPC config
