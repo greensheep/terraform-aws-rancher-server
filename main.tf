@@ -39,24 +39,23 @@ variable "server_instance_type" {
 variable "server_ami" {
     description = "Amazon Linux AMI id for the target region."
     default = {
-        eu-west-1      = "ami-69b9941e"
-        eu-central-1   = "ami-daaeaec7"
-        us-west-1      = "ami-cd3aff89"
-        us-west-2      = "ami-9ff7e8af"
-        us-east-1      = "ami-e3106686"
-        ap-northeast-1 = "ami-9a2fb89a"
-        ap-southeast-1 = "ami-52978200"
-        ap-southeast-2 = "ami-c11856fb"
-        sa-east-1      = "ami-3b0c9926"
+        eu-west-1      = "ami-f9dd458a"
+        eu-central-1   = "ami-ea26ce85"
+        us-west-1      = "ami-31490d51"
+        us-west-2      = "ami-7172b611"
+        us-east-1      = "ami-6869aa05"
+        ap-northeast-1 = "ami-374db956"
+        ap-northeast-2 = "ami-2b408b45"
+        ap-south-1     = "ami-ffbdd790"
+        ap-southeast-1 = "ami-a59b49c6"
+        ap-southeast-2 = "ami-dc361ebf"
+        sa-east-1      = "ami-6dd04501"
     }
 }
 
 # SSL
-variable "ssl_certificate_body" {
-	description = "Server SSL certificate body file path."
-}
-variable "ssl_private_key" {
-	description = "Server SSL private key file path."
+variable "ssl_email" {
+	description = "E-Mail address to use for Lets Encrypt account."
 }
 
 # Database

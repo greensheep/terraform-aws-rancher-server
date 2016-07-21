@@ -14,21 +14,6 @@ resource "aws_key_pair" "keypair" {
 
 }
 
-# Nginx proxy config
-resource "template_file" "nginx_config" {
-
-    template = "${file("${path.module}/files/nginx.template")}"
-
-    vars {
-        server_hostname = "${var.server_hostname}"
-    }
-
-    lifecycle {
-        create_before_destroy = true
-    }
-
-}
-
 # User-data template
 resource "template_file" "user_data" {
 
@@ -42,13 +27,10 @@ resource "template_file" "user_data" {
         # Server config
         server_version            = "${var.server_version}"
         server_credentials_bucket = "${aws_s3_bucket.server_credentials_bucket.id}"
+        server_hostname           = "${var.server_hostname}"
 
         # SSL certificate
-        ssl_certificate_body = "${file("${var.ssl_certificate_body}")}"
-        ssl_private_key      = "${file("${var.ssl_private_key}")}"
-
-        # Nginx config file
-        nginx_config   = "${template_file.nginx_config.rendered}"
+        ssl_email = "${var.ssl_email}"
 
         # SQS url
         sqs_url = "${aws_sqs_queue.autoscaling_hooks_queue.id}"

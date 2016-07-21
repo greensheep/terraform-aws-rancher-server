@@ -1,12 +1,8 @@
 #!/bin/bash
 
-# Write SSL certificate / key
-echo "${ssl_certificate_body}" > /etc/ssl/certs/rancher-server.pem
-echo "${ssl_private_key}" > /etc/ssl/certs/rancher-server.key
-
-# Write Nginx config
-mkdir -p /etc/nginx/conf.d
-echo "${nginx_config}" > /etc/nginx/conf.d/proxy.conf
+# Get nginx template file
+mkdir -p /etc/nginx-gen
+curl https://raw.githubusercontent.com/jwilder/nginx-proxy/master/nginx.tmpl > /etc/nginx-gen/nginx.tmpl
 
 # Install jq
 yum install -y jq
@@ -18,15 +14,21 @@ service docker start
 # Pull required images
 docker pull rancher/server:${server_version}
 docker pull greensheep/rancher-delete-host
-docker pull nginx:1.9
+docker pull nginx:1.10-alpine
+docker pull jwilder/docker-gen:0.7.3
+docker pull jrcs/letsencrypt-nginx-proxy-companion
 
 # Run rancher server
-docker run -d --restart=always --name=rancher-server \
+docker run -d --restart=always --name=rancher-server --expose 8080/tcp \
            -e CATTLE_DB_CATTLE_MYSQL_HOST=${database_address} \
            -e CATTLE_DB_CATTLE_MYSQL_PORT=${database_port} \
            -e CATTLE_DB_CATTLE_MYSQL_NAME=${database_name} \
            -e CATTLE_DB_CATTLE_USERNAME=${database_username} \
            -e CATTLE_DB_CATTLE_PASSWORD=${database_password} \
+           -e VIRTUAL_HOST=${server_hostname} \
+           -e VIRTUAL_PORT=8080 \
+           -e LETSENCRYPT_HOST=${server_hostname} \
+           -e LETSENCRYPT_EMAIL=${ssl_email} \
               rancher/server:${server_version}
 
 # Wait for rancher server to start
@@ -83,10 +85,27 @@ docker run -d --restart=always --name=asglifecycle \
            --link rancher-server:rancher-server \
            greensheep/rancher-delete-host
 
-# Start nginx
-docker run -d --restart=always --name=rancher-proxy \
+# Start Nginx
+docker run -d --restart=always --name=nginx \
            -p 80:80 -p 443:443 \
-           -v /etc/nginx/conf.d:/etc/nginx/conf.d:ro \
-           -v /etc/ssl/certs:/etc/ssl/certs:ro \
-           --link rancher-server:rancher-server \
-           nginx:1.9
+           -v /etc/nginx/conf.d  \
+           -v /etc/nginx/vhost.d \
+           -v /usr/share/nginx/html \
+           -v /etc/ssl/certs:/etc/nginx/certs:ro \
+              nginx:1.10-alpine
+
+# Start docker-gen
+docker run -d --restart=always --name=nginx-gen \
+           --volumes-from nginx \
+           -v /etc/nginx-gen/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro \
+           -v /var/run/docker.sock:/tmp/docker.sock:ro \
+              jwilder/docker-gen:0.7.3 \
+              -notify-sighup nginx -watch -wait 5s:30s /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
+
+# Start lets encrypt
+docker run -d --restart=always --name=nginx-letsencrypt \
+           -e "NGINX_DOCKER_GEN_CONTAINER=nginx-gen" \
+           --volumes-from nginx \
+           -v /etc/ssl/certs:/etc/nginx/certs:rw \
+           -v /var/run/docker.sock:/var/run/docker.sock:ro \
+              jrcs/letsencrypt-nginx-proxy-companion

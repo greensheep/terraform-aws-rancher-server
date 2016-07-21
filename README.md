@@ -6,7 +6,7 @@ The server is placed behind an Nginx proxy which is responsible for SSL terminat
 
 ### Features
 
-- SSL required
+- Automatic SSL provided by Lets Encrypt
 - Stateless server container through the use of an external database
 - Includes a sidekick app for automatically removing hosts due to be terminated by an autoscaling group (via autoscaling lifecycle hooks)
 - Mostly configurable with variables (happy to accept PRs for new vars)
@@ -37,8 +37,7 @@ Include the following in your Terraform config:
         server_version   = "v0.42.0"
 
         # SSL
-        ssl_certificate_body  = "path/to/ssl-cert-including-chain"
-        ssl_private_key       = "path/to/private-key"
+        ssl_email = "example@domain.com"
 
         # Database
         database_address  = "dbhost"
@@ -52,7 +51,6 @@ Include the following in your Terraform config:
 - The rancher server takes a minute or so to start up and longer on initial bootstrap.. give it at least 10 mins after terraform has finished creating all the resources.
 - On initial bootstrap, the server will be unprotected.. the first thing you should do is configure access control!
 - The hostname should be routable to the server before creating hosts - the best way to do this is with Route53 and a terraform config (see example below).
-- It should be possible to use a self-signed SSL certificate, but I've not tested this.
 - The rancher database should already be created (Rancher will bootstrap the tables but wont create the DB, see example below).
 
 #### Example DNS config
