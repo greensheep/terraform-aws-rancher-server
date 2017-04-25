@@ -98,10 +98,6 @@ output "server_public_ip" {
     value = "${aws_instance.rancher_server.public_ip}"
 }
 
-output "server_hostname" {
-    value = "${var.server_hostname}"
-}
-
 output "server_keyname" {
     value = "${aws_key_pair.keypair.key_name}"
 }
