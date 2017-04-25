@@ -4,11 +4,10 @@
 mkdir -p /etc/nginx-gen
 curl https://raw.githubusercontent.com/jwilder/nginx-proxy/master/nginx.tmpl > /etc/nginx-gen/nginx.tmpl
 
-# Install jq
-yum install -y jq
+# Install jq/docker
+yum install -y jq docker
 
-# Install docker
-wget -qO- https://get.docker.com/ | sh
+# Start docker
 service docker start
 
 # Pull required images

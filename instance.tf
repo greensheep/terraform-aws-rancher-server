@@ -75,6 +75,12 @@ resource "aws_instance" "rancher_server" {
     # Instance profile - sets required permissions to access other aws resources
     iam_instance_profile = "${aws_iam_instance_profile.rancher_server_instance_profile.id}"
 
+    root_block_device {
+        volume_type = "${var.server_root_volume_type}"
+        volume_size = "${var.server_root_volume_size}"
+        delete_on_termination = "${var.server_root_volume_delete_on_terminate}"
+    }
+
     # Misc
     instance_type = "${var.server_instance_type}"
 

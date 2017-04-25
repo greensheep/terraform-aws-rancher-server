@@ -52,6 +52,15 @@ variable "server_ami" {
         sa-east-1      = "ami-6dd04501"
     }
 }
+variable "server_root_volume_type" {
+    default = "gp2"
+}
+variable "server_root_volume_size" {
+    default = "64"
+}
+variable "server_root_volume_delete_on_terminate" {
+    default = true
+}
 
 # SSL
 variable "ssl_email" {
