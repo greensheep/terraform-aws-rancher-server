@@ -50,7 +50,7 @@ EOF
 # Allows the server to read/write api keys to the S3 bucket.
 resource "aws_iam_policy" "s3_server_credentials" {
 
-    name = "S3-credentials-access"
+    name = "${var.server_name}-S3-credentials-access"
     path = "/"
     description = "Allow the Rancher server to access the credentials file in the S3 bucket."
     policy = <<EOF
@@ -78,7 +78,7 @@ EOF
 # published to the SQS queue.
 resource "aws_iam_policy" "sqs_queue_access" {
 
-    name = "SQS-queue-access"
+    name = "${var.server_name}-SQS-queue-access"
     path = "/"
     description = "Allow the lifecycle hook app to receive and process SQS queue messages."
     policy = <<EOF
@@ -104,7 +104,7 @@ EOF
 # Autoscaling lifecycle complete action
 resource "aws_iam_policy" "autoscaling_complete_lifecycle_action" {
 
-    name = "Allow-autoscaling-complete-action"
+    name = "${var.server_name}-Allow-autoscaling-complete-action"
     path = "/"
     description = "Allow the lifecycle hook app send a complete action request that releases the instance for termination."
     policy = <<EOF
@@ -131,7 +131,7 @@ EOF
 # S3 bucket access
 resource "aws_iam_policy_attachment" "rancher_server_s3_policy" {
 
-    name = "rancher_server_s3_policy"
+    name = "${var.server_name}_s3_policy"
     policy_arn = "${aws_iam_policy.s3_server_credentials.arn}"
     roles = [
         "${aws_iam_role.rancher_server_role.name}"
@@ -142,7 +142,7 @@ resource "aws_iam_policy_attachment" "rancher_server_s3_policy" {
 # SQS access
 resource "aws_iam_policy_attachment" "rancher_server_sqs_policy" {
 
-    name = "rancher_server_sqs_policy"
+    name = "${var.server_name}_sqs_policy"
     policy_arn = "${aws_iam_policy.sqs_queue_access.arn}"
     roles = [
         "${aws_iam_role.rancher_server_role.name}"
@@ -153,7 +153,7 @@ resource "aws_iam_policy_attachment" "rancher_server_sqs_policy" {
 # Complete autoscaling hook
 resource "aws_iam_policy_attachment" "complete_autoscaling_hooks" {
 
-    name = "complete_autoscaling_hooks"
+    name = "${var.server_name}_complete_autoscaling_hooks"
     policy_arn = "${aws_iam_policy.autoscaling_complete_lifecycle_action.arn}"
     roles = [
         "${aws_iam_role.rancher_server_role.name}"
