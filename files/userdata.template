@@ -28,6 +28,7 @@ docker run -d --restart=always --name=rancher-server --expose 8080/tcp \
            -e VIRTUAL_PORT=8080 \
            -e LETSENCRYPT_HOST=${server_hostname} \
            -e LETSENCRYPT_EMAIL=${ssl_email} \
+           -e DEFAULT_CATTLE_CATALOG_URL='{"catalogs":{"community":{"url":"https://github.com/rancher/community-catalog.git","branch":"master"},"library":{"url":"https://github.com/rancher/rancher-catalog.git","branch":"${RELEASE}"}}}"' \ 
               rancher/server:${server_version}
 
 # Wait for rancher server to start
